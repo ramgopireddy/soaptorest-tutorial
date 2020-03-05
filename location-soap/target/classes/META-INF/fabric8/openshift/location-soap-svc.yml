@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    fabric8.io/git-commit: 504d2f381700f0083fec0a22f02e79bd44a44676
+    fabric8.io/iconUrl: img/icons/camel.svg
+    fabric8.io/git-branch: master
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9779"
+  labels:
+    expose: "true"
+    app: location-soap
+    provider: fabric8
+    version: 1.0.0-SNAPSHOT
+    group: com.redhat
+  name: location-soap
+spec:
+  ports:
+  - name: http
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: location-soap
+    provider: fabric8
+    group: com.redhat

@@ -1,0 +1,126 @@
+---
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      fabric8.io/git-commit: 504d2f381700f0083fec0a22f02e79bd44a44676
+      fabric8.io/iconUrl: img/icons/camel.svg
+      fabric8.io/git-branch: master
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9779"
+    labels:
+      expose: "true"
+      app: location-soap
+      provider: fabric8
+      version: 1.0.0-SNAPSHOT
+      group: com.redhat
+    name: location-soap
+  spec:
+    ports:
+    - name: http
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app: location-soap
+      provider: fabric8
+      group: com.redhat
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      fabric8.io/git-commit: 504d2f381700f0083fec0a22f02e79bd44a44676
+      fabric8.io/iconUrl: img/icons/camel.svg
+      fabric8.io/git-branch: master
+      fabric8.io/metrics-path: dashboard/file/camel-routes.json/?var-project=location-soap&var-version=1.0.0-SNAPSHOT
+    labels:
+      app: location-soap
+      provider: fabric8
+      version: 1.0.0-SNAPSHOT
+      group: com.redhat
+    name: location-soap
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 2
+    selector:
+      app: location-soap
+      provider: fabric8
+      group: com.redhat
+    strategy:
+      rollingParams:
+        timeoutSeconds: 3600
+      type: Rolling
+    template:
+      metadata:
+        annotations:
+          fabric8.io/git-commit: 504d2f381700f0083fec0a22f02e79bd44a44676
+          fabric8.io/iconUrl: img/icons/camel.svg
+          fabric8.io/git-branch: master
+          fabric8.io/metrics-path: dashboard/file/camel-routes.json/?var-project=location-soap&var-version=1.0.0-SNAPSHOT
+        labels:
+          app: location-soap
+          provider: fabric8
+          version: 1.0.0-SNAPSHOT
+          group: com.redhat
+      spec:
+        containers:
+        - env:
+          - name: SPRING_APPLICATION_JSON
+            value: '{"server":{"tomcat":{"max-threads":1}}}'
+          - name: KUBERNETES_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: redhat/location-soap:snapshot-200304-214705-0979
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9081
+              scheme: HTTP
+            initialDelaySeconds: 180
+          name: spring-boot
+          ports:
+          - containerPort: 9779
+            name: prometheus
+            protocol: TCP
+          - containerPort: 9090
+            name: websm
+            protocol: TCP
+          - containerPort: 8778
+            name: jolokia
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9081
+              scheme: HTTP
+            initialDelaySeconds: 10
+          resources:
+            limits:
+              cpu: "1.0"
+            requests:
+              cpu: "0.2"
+          securityContext:
+            privileged: false
+    triggers:
+    - type: ConfigChange
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    labels:
+      expose: "true"
+      app: location-soap
+      provider: fabric8
+      version: 1.0.0-SNAPSHOT
+      group: com.redhat
+    name: location-soap
+  spec:
+    port:
+      targetPort: 9090
+    to:
+      kind: Service
+      name: location-soap
